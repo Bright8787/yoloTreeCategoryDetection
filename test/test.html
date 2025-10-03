@@ -24,7 +24,40 @@
             }
         }
 
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        function captureFrame() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas;
+        }
+
+        canvas.toBlob(blob => {
+            fetch('/predict', {
+                method: 'POST',
+                body: blob
+            })
+                .then(response => response.json())
+                .then(predictions => console.log(predictions));
+        }, 'image/jpeg');
         startCamera();
+        // function captureFrame() {
+        //     const canvas = document.createElement('canvas');
+        //     canvas.width = video.videoWidth;
+        //     canvas.height = video.videoHeight;
+        //     const ctx = canvas.getContext('2d');
+        //     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        //     return canvas;
+        // }
+
+        // setInterval(() => {
+        //     const frame = captureFrame();
+        //     console.log("Captured a frame:", frame);
+        // }, 1000);
+
     </script>
 </body>
 

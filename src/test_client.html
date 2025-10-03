@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Live Camera YOLO</title>
+</head>
+
+<body>
+    <h1>Camera + YOLO FastAPI Demo</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set your server IP (LAN IP of host machine)
+        const SERVER_URL = "http://192.168.1.51:8000/predict";
+
+        // Start camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Camera error:", err);
+            }
+        }
+
+        // Capture frame and send to FastAPI server
+        async function sendFrame() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("file", blob, "frame.jpg");
+
+                try {
+                    const response = await fetch(SERVER_URL, {
+                        method: "POST",
+                        body: formData
+                    });
+                    const data = await response.json();
+                    drawPredictions(data.predictions);
+                } catch (err) {
+                    console.error("Error sending frame:", err);
+                }
+            }, "image/jpeg");
+        }
+
+        // Draw predictions on canvas
+        function drawPredictions(predictions) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            ctx.font = "18px Arial";
+            ctx.fillStyle = "red";
+            predictions.forEach(pred => {
+                const x = pred.xmin;
+                const y = pred.ymin;
+                const w = pred.xmax - pred.xmin;
+                const h = pred.ymax - pred.ymin;
+                ctx.strokeRect(x, y, w, h);
+                ctx.fillText(pred.name, x, y > 10 ? y - 5 : y + 15);
+            });
+        }
+
+        // Send a frame every 1 second
+        setInterval(sendFrame, 1000);
+
+        startCamera();
+    </script>
+</body>
+
+</html>
