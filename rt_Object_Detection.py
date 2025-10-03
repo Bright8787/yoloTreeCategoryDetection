@@ -3,7 +3,7 @@ from ultralytics import YOLO
 from pathlib import Path
 # Load YOLO11n pretrained detection model
 model = YOLO("yolo11n.pt")
-cap = cv2.VideoCapture(0)  # 0 = default camera
+cap = cv2.VideoCapture(f"tcp://bright.local:8888")  # FFmpeg TCP stream
 # Run real-time detection on webcam
 
 if not cap.isOpened():
